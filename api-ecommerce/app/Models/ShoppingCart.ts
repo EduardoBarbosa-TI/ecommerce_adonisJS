@@ -10,14 +10,11 @@ export default class ShoppingCart extends BaseModel {
   @column()
   public status: string
 
+  @column()
+  public unitProducts: number
+
   @hasMany(() => User)
   public user: HasMany<typeof User>
-
-  @manyToMany(() => Product,{
-    pivotTimestamps: true,
-    pivotColumns: ['unitProducts'],
-  })
-  public products: ManyToMany<typeof Product>
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
