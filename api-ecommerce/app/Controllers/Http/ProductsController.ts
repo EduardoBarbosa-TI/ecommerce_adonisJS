@@ -5,12 +5,7 @@ import UpdateProductValidator from 'App/Validators/UpdateProductValidator'
 
 export default class ProductsController {
   public async index({response}: HttpContextContract) {
-    const products = await Database.from("products")
-      .join('product_shopping_carts','products.id','=','product_shopping_carts.productId')
-      .join('shopping_carts','product_shopping_carts.shoppingCartId','=','shopping_carts.id')
-      .join('users','shopping_carts.userId','=','users.id')
-      .select("users.id as id_user","users.name as name_user","products.name as name_product","products.price","products.description","product_shopping_carts.unitProducts")
-
+    const products = await Database.from("products").select("*")
     return response.status(200).json({
       products
     })
