@@ -20,18 +20,22 @@
 
 import Route from '@ioc:Adonis/Core/Route'
 
-// Route.get('/', async () => {
-//   return { hello: 'world' }
-// })
+Route.get('/', async () => { return { hello: 'world' }})
 Route.resource('/products', 'ProductsController').apiOnly().except(['destroy','update','store'])
+Route.post('/login', 'UsersController.login')
+Route.post('/register', 'UsersController.store')
 
 Route.group(() => {
-  Route.post('/cart/:id', "ShoppingCartsController.store")
-  Route.delete('/cart', "ShoppingCartsController.delete")
+  Route.post('/cart/:product/:units?', "ShoppingCartsController.store")
+  Route.get('/cart', "ShoppingCartsController.index")
+  Route.get('/cart/checkout', "ShoppingCartsController.checkout")
+  Route.delete('/cart/:product', "ShoppingCartsController.deleteProductsInCartShopping")
+  Route.delete('/cart', "ShoppingCartsController.deleteCartShopping")
+  Route.put('/cart/:product/:units', "ShoppingCartsController.update")
+  Route.resource('/users', 'UsersController').apiOnly().except(['store'])
   Route.resource('/products', 'ProductsController').apiOnly().except(['show','index'])
 }).middleware('auth')
 
-Route.resource('/users', 'UsersController').apiOnly()
-Route.post('/login', 'UsersController.login')
+
 
 
