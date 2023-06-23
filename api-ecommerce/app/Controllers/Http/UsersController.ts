@@ -5,6 +5,7 @@ import LoginValidator from 'App/Validators/LoginValidator'
 import StoreUserValidator from 'App/Validators/StoreUserValidator'
 import UpdateUserValidator from 'App/Validators/UpdateUserValidator'
 import { generateToken } from './AuthController'
+import User from 'App/Models/User'
 
 export default class UsersController {
   public async index() {
@@ -28,15 +29,16 @@ export default class UsersController {
   public async login({request,response}: HttpContextContract){
     const payload = await request.validate(LoginValidator)
 
-    const user  = await Database.from("users").where("email",payload.email).first()
+    const user  = await Database.from("users").where("email",payload.email).first() as User
     if(!user){return response.status(404).send({ message: 'Usuário não encontrado!' })}
     payload['id'] = user.id
 
     const passwordMatche = await Hash.verify(user.password,payload.password)
     if(!passwordMatche){return response.status(401).send({ message: 'Senha incorreta!' })}
 
+    const {id,name, email} = user
     return response.json({
-      user,
+      user: { id, email, name },
       token: generateToken(user)
     })
   }
@@ -50,8 +52,13 @@ export default class UsersController {
   }
 
   public async update({request,response,params}: HttpContextContract) {
-    
     const payload = await request.validate(UpdateUserValidator)
+
+    if(payload.admin && !request.user.admin == true){
+      return response.status(401).json({
+        message: 'Você não é administrador!'
+      })
+    }
 
     if(payload.password){
       payload.password = await Hash.make(payload.password)
