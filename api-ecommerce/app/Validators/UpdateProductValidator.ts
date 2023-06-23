@@ -27,7 +27,7 @@ export default class UpdateProductValidator {
     name: schema.string.optional(),
     description: schema.string.optional(),
     price: schema.number.optional(),
-    unitsStoke: schema.number.optional()
+    unitStoke: schema.number.optional()
   })
 
   /**
