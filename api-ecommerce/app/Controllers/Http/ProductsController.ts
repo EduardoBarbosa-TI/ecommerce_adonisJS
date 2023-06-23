@@ -1,11 +1,15 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Database from '@ioc:Adonis/Lucid/Database'
+import Product from 'App/Models/Product'
 import StoreProductValidator from 'App/Validators/StoreProductValidator'
 import UpdateProductValidator from 'App/Validators/UpdateProductValidator'
 
 export default class ProductsController {
-  public async index({response}: HttpContextContract) {
-    const products = await Database.from("products").select("*")
+  public async index({response, params}: HttpContextContract) {
+    const { page, limit } = params || 1
+    const pagination = await Product.query().paginate(page,limit)
+    const products = pagination.toJSON().data
+
     return response.status(200).json({
       products
     })
@@ -17,13 +21,20 @@ export default class ProductsController {
     if(!request.user.admin){
       return response.status(401).send({ message: 'Você não é administrador!' })
     }
-    await Database.table("products").insert({
-      ...payload
-    })
 
-    return response.status(201).json({
-      message: "Produto adicionado com sucesso!"
-    })
+    try {
+      await Database.table("products").insert({ ...payload })
+      return response.status(201).json({
+        message: "Produto adicionado com sucesso!"
+      })
+
+    } catch (error) {
+      return response.status(500).json({
+        message: 'Erro ao adicionar produto!'
+      })
+    }
+
+
   }
 
   public async show({params,response}: HttpContextContract) {
