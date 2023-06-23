@@ -1,15 +1,32 @@
 import Database from "@ioc:Adonis/Lucid/Database";
 import ShoppingCart from "App/Models/ShoppingCart";
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import Product from "App/Models/Product";
 export default class ShoppingCartsController {
   public async checkout({ request, response}: HttpContextContract){
-    await Database.from('shopping_carts')
-      .join('users','shopping_carts.userId', '=','users.id')
-      .where('shopping_carts.userId',request.user.id)
-      .where('shopping_carts.status','Em andamento')
-      .update('status','Compras realizada')
+    const products = await Database.from('products')
+    .join('product_shopping_carts', 'products.id', '=', 'product_shopping_carts.productId')
+    .join('shopping_carts', 'product_shopping_carts.shoppingCartId', '=', 'shopping_carts.id')
+    .join('users', 'shopping_carts.userId', '=', 'users.id')
+    .where('shopping_carts.userId', request.user.id)
+    .select('product_shopping_carts.id', 'products.name as name_product', 'products.price', 'products.description', 'product_shopping_carts.unitProducts')
 
-    return response.status(200)
+    let totalPrice = 0
+
+    products.forEach((product) => {
+      const price = product.price
+      const unitProducts = product.unitProducts
+      totalPrice += price * unitProducts
+    })
+
+    return response.status(200).json({
+      items_cart_shopping: [
+        {
+          products
+        }
+      ],
+      total: totalPrice
+    })
   }
 
   public async store({ request, response, params }: HttpContextContract) {
@@ -17,9 +34,10 @@ export default class ShoppingCartsController {
     const userCart = await Database.from("shopping_carts")
       .join('users','shopping_carts.userId', '=','users.id')
       .where('status','Em andamento')
+      .where('shopping_carts.userId',request.user.id)
       .select('*')
       .first()
-      console.log(product)
+
     if (product) {
       const unitProduct = Number(product.unitProducts)
       const newUnits = unitProduct + Number(params.units ?? 1)
@@ -35,7 +53,6 @@ export default class ShoppingCartsController {
         userId: request.user.id,
         status: "Em andamento"
       })
-
     }
 
     const shoppingCart = await Database.from("shopping_carts").where("userId", request.user.id).first() as ShoppingCart
