@@ -21,7 +21,8 @@
 import Route from '@ioc:Adonis/Core/Route'
 
 Route.get('/', async () => { return { hello: 'world' }})
-Route.resource('/products', 'ProductsController').apiOnly().except(['destroy','update','store'])
+Route.resource('/products', 'ProductsController').apiOnly().except(['destroy','update','store','index'])
+Route.get('/products/:page?/:limit?', 'ProductsController.index')
 Route.post('/login', 'UsersController.login')
 Route.post('/register', 'UsersController.store')
 
