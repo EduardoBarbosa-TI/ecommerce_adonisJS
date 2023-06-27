@@ -17,7 +17,6 @@ export default class UsersController {
 
   public async store({ request}: HttpContextContract) {
     const payload = await request.validate(StoreUserValidator)
-
     return await this.usersService.store(payload as User)
   }
 
@@ -27,7 +26,6 @@ export default class UsersController {
 
   public async update({ request,params }: HttpContextContract) {
     const payload = await request.validate(UpdateUserValidator)
-
     return await this.usersService.update(params.id,payload as User)
   }
 
