@@ -1,68 +1,35 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import Database from '@ioc:Adonis/Lucid/Database'
 import Product from 'App/Models/Product'
+import ProductsServices from 'App/Service/ProductsService'
 import StoreProductValidator from 'App/Validators/StoreProductValidator'
 import UpdateProductValidator from 'App/Validators/UpdateProductValidator'
-
 export default class ProductsController {
-  public async index({response, params}: HttpContextContract) {
-    const { page, limit } = params || 1
-    const pagination = await Product.query().paginate(page,limit)
-    const products = pagination.toJSON().data
+  private productsService: ProductsServices
 
-    return response.status(200).json({
-      products
-    })
+  constructor(){
+    this.productsService = new ProductsServices()
   }
 
-  public async store({request, response}: HttpContextContract) {
+  public async index({ request}: HttpContextContract) {
+    const { page, limit } = request.qs()
+    return await this.productsService.index(page,limit)
+  }
+
+  public async store({ request }: HttpContextContract) {
     const payload = await request.validate(StoreProductValidator)
-
-    if(!request.user.admin){
-      return response.status(401).send({ message: 'Você não é administrador!' })
-    }
-
-    try {
-      await Database.table("products").insert({ ...payload })
-      return response.status(201).json({
-        message: "Produto adicionado com sucesso!"
-      })
-
-    } catch (error) {
-      return response.status(500).json({
-        message: 'Erro ao adicionar produto!'
-      })
-    }
-
-
+    return await this.productsService.store(payload as Product)
   }
 
-  public async show({params,response}: HttpContextContract) {
-    const products = await Database.from("products").where("id", params.id)
-
-    return response.status(200).json({
-      products
-    })
+  public async show({params}: HttpContextContract) {
+    return await this.productsService.show(params.id)
   }
 
-  public async update({request,response,params}: HttpContextContract) {
+  public async update({request,params}: HttpContextContract) {
     const payload = await request.validate(UpdateProductValidator)
-    if(!request.user.admin){
-      return response.status(401).send({ message: 'Você não é administrador!' })
-    }
-    await Database.from("products").where("id", params.id).update(payload)
-
-    return response.status(200).json({
-      message: "Produto atualizado com sucesso!"
-    })
+    return await this.productsService.update(params.id,payload as Product)
   }
 
-  public async destroy({response,request,params}: HttpContextContract) {
-    if(!request.user.admin){
-      return response.status(401).send({ message: 'Você não é administrador!' })
-    }
-    await Database.from("products").where("id", params.id).delete()
-
-    return response.status(200)
+  public async destroy({ params }: HttpContextContract) {
+    return await this.productsService.delete(params.id)
   }
 }
