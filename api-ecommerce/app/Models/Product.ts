@@ -1,7 +1,7 @@
+
 import { DateTime } from 'luxon'
 import { BaseModel, ManyToMany, column, manyToMany } from '@ioc:Adonis/Lucid/Orm'
 import ShoppingCart from './ShoppingCart'
-
 export default class Product extends BaseModel {
   @column({ isPrimary: true })
   public id: number
@@ -15,13 +15,17 @@ export default class Product extends BaseModel {
   @column()
   public price: number
 
+  @column({columnName: 'unitStoke'})
+  public unitStoke: number
+
   @manyToMany(() => ShoppingCart,{
+    localKey: 'id',
+    relatedKey: 'id',
+    pivotTable: 'product_shopping_carts',
     pivotTimestamps: true,
     pivotColumns: ['unitProducts'],
   })
-  public shoppingCart: ManyToMany<typeof ShoppingCart>
-  @column()
-  public unitStoke: number
+  public shoppingCarts: ManyToMany<typeof ShoppingCart>
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
