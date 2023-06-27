@@ -1,7 +1,7 @@
+
 import { DateTime } from 'luxon'
 import { BaseModel, HasMany, column, hasMany } from '@ioc:Adonis/Lucid/Orm'
 import ShoppingCart from './ShoppingCart'
-
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -21,8 +21,8 @@ export default class User extends BaseModel {
 
   @column()
   public admin: boolean
-  
-  @hasMany(() => ShoppingCart)
+
+  @hasMany(() => ShoppingCart, {})
   public shoppingCarts: HasMany<typeof ShoppingCart>
 
   @column.dateTime({ autoCreate: true })
