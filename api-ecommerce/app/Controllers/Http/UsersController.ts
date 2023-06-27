@@ -1,80 +1,37 @@
-import Hash from '@ioc:Adonis/Core/Hash'
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import Database from '@ioc:Adonis/Lucid/Database'
-import LoginValidator from 'App/Validators/LoginValidator'
 import StoreUserValidator from 'App/Validators/StoreUserValidator'
 import UpdateUserValidator from 'App/Validators/UpdateUserValidator'
-import { generateToken } from './AuthController'
 import User from 'App/Models/User'
+import UsersService from 'App/Service/UsersService'
 
 export default class UsersController {
+  private usersService: UsersService
+
+  constructor(){
+    this.usersService = new UsersService
+  }
+
   public async index() {
-    const users = await Database.from("users").select("*")
-    return users
+    return this.usersService.index()
   }
 
-  public async store({request, response}: HttpContextContract) {
+  public async store({ request}: HttpContextContract) {
     const payload = await request.validate(StoreUserValidator)
-    payload.password = await Hash.make(payload.password)
 
-    await Database.table("users").insert({
-      ...payload
-    })
-
-    return response.status(201).json({
-      message: "Usuário adicionado com sucesso!"
-    })
+    return await this.usersService.store(payload as User)
   }
 
-  public async login({request,response}: HttpContextContract){
-    const payload = await request.validate(LoginValidator)
-
-    const user  = await Database.from("users").where("email",payload.email).first() as User
-    if(!user){return response.status(404).send({ message: 'Usuário não encontrado!' })}
-    payload['id'] = user.id
-
-    const passwordMatche = await Hash.verify(user.password,payload.password)
-    if(!passwordMatche){return response.status(401).send({ message: 'Senha incorreta!' })}
-
-    const {id,name, email} = user
-    return response.json({
-      user: { id, email, name },
-      token: generateToken(user)
-    })
+  public async show({ params }: HttpContextContract) {
+    return await this.usersService.findById(params.id)
   }
 
-  public async show({params, response}: HttpContextContract) {
-    const user = await Database.from("users").where("id", params.id)
-
-    return response.status(200).json({
-      user
-    })
-  }
-
-  public async update({request,response,params}: HttpContextContract) {
+  public async update({ request,params }: HttpContextContract) {
     const payload = await request.validate(UpdateUserValidator)
 
-    if(payload.admin && !request.user.admin == true){
-      return response.status(401).json({
-        message: 'Você não é administrador!'
-      })
-    }
-
-    if(payload.password){
-      payload.password = await Hash.make(payload.password)
-    }
-
-    await Database.from("users").where('id',params.id).update({
-      ...payload
-    })
-
-    return response.status(200).json({
-      message: "Usuário alterado com sucesso!"
-    })
+    return await this.usersService.update(params.id,payload as User)
   }
 
-  public async destroy({response,params}: HttpContextContract) {
-    await Database.from("users").where("id", params.id).delete()
-    return response.status(200)
+  public async destroy({ params }: HttpContextContract) {
+    return await this.usersService.delete(params.id)
   }
 }
