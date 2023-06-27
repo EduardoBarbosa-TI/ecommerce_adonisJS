@@ -19,11 +19,13 @@
 */
 
 import Route from '@ioc:Adonis/Core/Route'
+import AutoSwagger from "adonis-autoswagger";
+import swagger from "../config/swagger";
 
 Route.get('/', async () => { return { hello: 'world' }})
 Route.resource('/products', 'ProductsController').apiOnly().except(['destroy','update','store','index'])
-Route.get('/products/:page?/:limit?', 'ProductsController.index')
-Route.post('/login', 'UsersController.login')
+Route.get('/products', 'ProductsController.index')
+Route.post('/login', 'UsersController.login').middleware('authLogin')
 Route.post('/register', 'UsersController.store')
 
 Route.group(() => {
@@ -35,8 +37,15 @@ Route.group(() => {
   Route.put('/cart/:product/:units', "ShoppingCartsController.update")
   Route.resource('/users', 'UsersController').apiOnly().except(['store'])
   Route.resource('/products', 'ProductsController').apiOnly().except(['show','index'])
-}).middleware('auth')
+}).middleware('authToken')
 
+//Swagger-UI
+Route.get("/swagger", async () => {
+  return AutoSwagger.docs(Route.toJSON(), swagger);
+});
 
+Route.get("/docs", async () => {
+  return AutoSwagger.ui("/swagger");
+});
 
 
