@@ -12,14 +12,13 @@ export default class AuthMiddleware {
     this.usersService = new UsersService
   }
 
-  public async handle({ request, response }: HttpContextContract, next: () => Promise<void>) {
+  public async handle({ request, response }: HttpContextContract) {
     const payload = await request.validate(LoginValidator)
 
     const user = await this.usersService.findByEmail(payload.email)
-    if (!user) { return response.status(404).send({ message: 'Usuário não encontrado!' }) }
     payload['id'] = user.id
     const passwordMatche = await Hash.verify(user.password, payload.password)
-    if (!passwordMatche) { return response.status(401).send({ message: 'Senha incorreta!' }) }
+    if (!passwordMatche || !user) { throw new Error("UNAUTHORIZED")}
 
     const { id, name, email } = user
 
