@@ -1,31 +1,31 @@
 
-import User from "App/Models/User"
+import ProductsRepository from "App/Repositories/ProductsRepository"
 import ShoppingCartsRepository from "App/Repositories/ShoppingCartsRepository"
 import UsersRepository from "App/Repositories/UsersRepository"
 
 export default class ShoppingCartsService {
   private shoppingCartsRepository: ShoppingCartsRepository
   private usersRepository: UsersRepository
+  private productsRepository: ProductsRepository
 
   constructor(){
     this.shoppingCartsRepository =  new ShoppingCartsRepository()
     this.usersRepository = new UsersRepository()
+    this.productsRepository = new ProductsRepository()
   }
 
   public async index(userId: number){
-   const products = await this.shoppingCartsRepository.getAll(userId)
+    const user = await this.usersRepository.findById(userId)
+    const products = await this.shoppingCartsRepository.findProductsShoppingCart(user)
 
-    if (products.length == 0) {
-      return {
-        message: 'Você não tem produtos no carrinho de compras!'
-      }
-    }
+    if (products.length == 0) throw new Error('NOT_FOUND')
     return products
   }
 
   public async checkout(userId: number){
     let totalPrice = 0
-    const products = await this.shoppingCartsRepository.checkout(userId)
+    const user =  await this.usersRepository.findById(userId)
+    const products = await this.shoppingCartsRepository.checkout(user)
 
     products.forEach((product) => {
       const price = product.price
@@ -37,38 +37,39 @@ export default class ShoppingCartsService {
   }
 
   public async store(userId: number, productId: number, units?: number){
-    const productCarts = await this.shoppingCartsRepository.findByProducts(productId,userId)
-    const userCart = await this.shoppingCartsRepository.findByUser(userId)
+    const user = await this.usersRepository.findById(userId)
+    const product  = await this.productsRepository.findById(productId)
+    const productCarts = await this.shoppingCartsRepository.findByProductShoppingCart(product,user)
+    const userShoppingCarts  = await this.shoppingCartsRepository.findByUserShoppingCart(user)
 
-    if(!userCart){
-      const user = await this.usersRepository.findById(userId)
-      await this.shoppingCartsRepository.store(user as User)
-    }
+    if(!userShoppingCarts) {await this.shoppingCartsRepository.storeShoppingCart(user)}
+
 
     if (productCarts) {
       const unitProduct = productCarts.$extras.unitProducts
       const newUnits = unitProduct + Number(units ?? 1)
-      return await this.shoppingCartsRepository.updateByProductInShoppingCart(productId,userId, newUnits)
+      return await this.shoppingCartsRepository.updateByProductInShoppingCart(product,user, newUnits)
     }
 
-    return await this.shoppingCartsRepository.storeProductsShoppingCart(userId,productId,units ?? 1);
+    return await this.shoppingCartsRepository.storeProductsShoppingCart(userId,product,units ?? 1);
   }
 
   public async update(productId: number,userId: number, units: number){
-    const userCart = await this.shoppingCartsRepository.findByUser(userId)
-    if(!userCart){
-      return {
-        message: "Usuário não tem carrinho de compras"
-      }
-    }
-    return await this.shoppingCartsRepository.updateByProductInShoppingCart(productId,userCart.id,units)
+    const user = await this.usersRepository.findById(userId)
+    const product  = await this.productsRepository.findById(productId)
+
+    return await this.shoppingCartsRepository.updateByProductInShoppingCart(product,user,units)
   }
 
   public async deleteByProduct(productId: number, userId: number){
-    return await this.shoppingCartsRepository.deleteByProduct(productId,userId)
+    const user = await this.usersRepository.findById(userId)
+    const product  = await this.productsRepository.findById(productId)
+    await this.shoppingCartsRepository.deleteByProduct(product,user)
+    return {message: "Produto do carrinho deletado com sucesso!"}
   }
 
   public async delete(userId: number){
-    return await this.shoppingCartsRepository.delete(userId)
+    const user = await this.usersRepository.findById(userId)
+    return await this.shoppingCartsRepository.delete(user)
   }
 }
