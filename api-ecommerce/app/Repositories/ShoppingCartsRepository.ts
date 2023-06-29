@@ -6,115 +6,116 @@ import User from "App/Models/User";
 
 export default class ShoppingCartsRepository {
 
-  public async checkout(userId: number) {
-    return await Database.from('products')
-    .join('product_shopping_carts', 'products.id', '=', 'product_shopping_carts.product_id')
-    .join('shopping_carts', 'product_shopping_carts.shopping_cart_id', '=', 'shopping_carts.id')
-    .join('users', 'shopping_carts.userId', '=', 'users.id')
-    .where('shopping_carts.userId', userId)
-    .select('product_shopping_carts.id', 'products.name as name_product', 'products.price', 'products.description', 'product_shopping_carts.unitProducts')
-  }
-
-  public async getAll(userId: number){
-    return await Database.from('products')
+  public async checkout(user: User) {
+    const query =  await Database.from('products')
       .join('product_shopping_carts', 'products.id', '=', 'product_shopping_carts.product_id')
       .join('shopping_carts', 'product_shopping_carts.shopping_cart_id', '=', 'shopping_carts.id')
       .join('users', 'shopping_carts.userId', '=', 'users.id')
-      .where('shopping_carts.userId', userId)
-      .select('shopping_carts.status as status','product_shopping_carts.id', 'products.name as name_product', 'products.price', 'products.description', 'product_shopping_carts.unitProducts')
+      .where('shopping_carts.userId', user.id)
+      .select('product_shopping_carts.id', 'products.name as name_product', 'products.price', 'products.description', 'product_shopping_carts.unitProducts')
+
+    if(!query) throw new Error('INTERNAL_SERVER_ERROR')
+    return query
   }
 
-  public async store(user: User) {
-    const shoppingCart = await user.related('shoppingCarts').create({
-      status: 'Em andamento',
-    });
-
-    return shoppingCart
-  }
-
-  public async findByUser(userId: number) {
-    console.log(userId)
-    const user = await User.find(userId);
-    if (!user) {
-      return null
-    }
-    return await user.related('shoppingCarts').query().where('id',userId).first();
-  }
-
-  public async findByProducts(productId: number, userId: number) {
-    return await Product.query()
+  public async findProductsShoppingCart(user: User) {
+   const query =  await Database.from('products')
       .join('product_shopping_carts', 'products.id', '=', 'product_shopping_carts.product_id')
       .join('shopping_carts', 'product_shopping_carts.shopping_cart_id', '=', 'shopping_carts.id')
       .join('users', 'shopping_carts.userId', '=', 'users.id')
-      .where('shopping_carts.userId', userId)
-      .where('product_shopping_carts.product_id', productId)
+      .where('shopping_carts.userId', user.id)
+      .select('shopping_carts.status as status', 'product_shopping_carts.id', 'products.name as name_product', 'products.price', 'products.description', 'product_shopping_carts.unitProducts')
+
+    if(!query) throw new Error('INTERNAL_SERVER_ERROR')
+    return query
+  }
+
+  public async storeShoppingCart(user: User) {
+    const query =  await user.related('shoppingCarts').create({ status: 'Em andamento' })
+    if(!query) throw new Error()
+    return query
+  }
+
+  public async findByUserShoppingCart(user: User) {
+    return await user.related('shoppingCarts').query().where('userId', user.id).first()
+  }
+
+  public async findByProductShoppingCart(product: Product, user: User) {
+    const productQuery =  await Product.query()
+      .join('product_shopping_carts', 'products.id', '=', 'product_shopping_carts.product_id')
+      .join('shopping_carts', 'product_shopping_carts.shopping_cart_id', '=', 'shopping_carts.id')
+      .join('users', 'shopping_carts.userId', '=', 'users.id')
+      .where('shopping_carts.userId', user.id)
+      .where('product_shopping_carts.product_id', product.id)
       .select("product_shopping_carts.id", "products.name as name_product", "products.price", "products.description", "product_shopping_carts.unitProducts as unitProducts")
       .first()
+
+    return productQuery
   }
 
-  public async storeProductsShoppingCart(userId: number, productId: number, units?: number) {
+  public async storeProductsShoppingCart(userId: number, product: Product, units?: number) {
     const shoppingCart = await ShoppingCart.query()
       .where('userId', userId)
-      .firstOrFail()
-    return await shoppingCart.related('products').attach({
-      [productId]: {
+      .first()
+
+    if(!shoppingCart) throw new Error('NOT_FOUND')
+    await shoppingCart.related('products').attach({
+      [product.id]: {
         unitProducts: units
       }
-    },)
+    })
   }
 
-  public async updateByProductInShoppingCart(productId: number,userCartId: number, units: number) {
-    return await Database.from("product_shopping_carts")
+  public async updateByProductInShoppingCart(product: Product, user: User, units: number) {
+    const userCart = await this.findByUserShoppingCart(user)
+    if(!userCart) throw new Error('NOT_FOUND')
+
+    return  await Database.from("product_shopping_carts")
       .join('shopping_carts', 'product_shopping_carts.shopping_cart_id', '=', 'shopping_carts.id')
       .join('products', 'product_shopping_carts.product_id', '=', 'products.id')
       .join('users', 'shopping_carts.userId', '=', 'users.id')
-      .where('product_shopping_carts.product_id', productId)
-      .where('product_shopping_carts.shopping_cart_id', userCartId)
+      .where('product_shopping_carts.product_id', product.id)
+      .where('product_shopping_carts.shopping_cart_id', userCart.id)
       .update('unitProducts', units);
   }
 
-  public async deleteByProduct(productId: number,userId: number){
-    try {
-      await Database.from("product_shopping_carts")
+  public async deleteByProduct(product: Product, user: User) {
+
+    const query = await Database.from("product_shopping_carts")
       .whereIn(
         'id',
         Database.from("product_shopping_carts")
           .join('products', 'product_shopping_carts.product_id', '=', 'products.id')
           .join('shopping_carts', 'product_shopping_carts.shopping_cart_id', '=', 'shopping_carts.id')
           .join('users', 'shopping_carts.userId', '=', 'users.id')
-          .where('products.id', productId)
-          .andWhere('shopping_carts.userId', userId)
+          .where('products.id', product.id)
+          .andWhere('shopping_carts.userId', user.id)
           .select('product_shopping_carts.id')
       )
       .delete();
 
-    } catch (error) {
-      return {
-        message: "Erro ao producto do carrinho de compra!"
-      }
-    }
+    if(!query) throw new Error('INTERNAL_SERVER_ERROR')
 
+    return query
   }
 
-  public async delete(userId: number){
-    try {
-      await Database.from("product_shopping_carts")
+  public async delete(user: User) {
+    const query = await Database.from("product_shopping_carts")
       .whereIn(
         'id',
         Database.from("product_shopping_carts")
           .join('products', 'product_shopping_carts.product_id', '=', 'products.id')
           .join('shopping_carts', 'product_shopping_carts.shopping_cart_id', '=', 'shopping_carts.id')
           .join('users', 'shopping_carts.userId', '=', 'users.id')
-          .andWhere('shopping_carts.userId', userId)
+          .andWhere('shopping_carts.userId', user.id)
           .select('product_shopping_carts.id')
       )
       .delete();
 
-      await ShoppingCart.query().where('userId', userId).delete()
-    } catch (error) {
-      return {
-        message: "Erro ao deletar carrinho de compra "
-      }
-    }
+    if(!query) throw new Error('INTERNAL_SERVER_ERROR')
+
+    await ShoppingCart.query().where('userId', user.id).delete()
+
+    return {message: 'Carrinho de compras deletado com sucesso!'}
   }
 }
