@@ -38,7 +38,7 @@ export default class UsersService {
   }
 
   public async delete(userId: number) {
-    await this.usersRepository.delete(userId)
+    return await this.usersRepository.delete(userId)
   }
 
   public async generateToken(user: User) {
