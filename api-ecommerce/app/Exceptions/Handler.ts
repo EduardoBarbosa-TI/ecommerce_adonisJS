@@ -22,7 +22,6 @@ export default class ExceptionHandler extends HttpExceptionHandler {
   }
 
   public async handle(error: any, ctx: HttpContextContract){
-    console.log(error)
     if (error.message === 'NOT_FOUND') {
       return ctx.response.status(404).json({
         message: 'Not Found'
