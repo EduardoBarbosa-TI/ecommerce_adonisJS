@@ -9,7 +9,7 @@ export default class ProductsServices{
   }
 
   public async index(page: number, limit: number){
-    return await this.productsRepository.getAll(page,limit)
+    return await this.productsRepository.findAll(page,limit)
   }
 
   public async store(product: Product){
@@ -17,7 +17,7 @@ export default class ProductsServices{
   }
 
   public async show(productId: number){
-    return await this.productsRepository.getById(productId)
+    return await this.productsRepository.findById(productId)
   }
 
   public async update(productId: number, product: Product){
