@@ -13,14 +13,11 @@ export default class AuthMiddleware {
       const token = request.header('Authorization')?.replace('Bearer ', '');
 
       if (!token) {
-        return response.status(401).send({ message: 'Acesso Restrito!' });
+        return response.status(403).send({ message: 'Acesso Restrito!' });
       }
       try {
         const userToken = jwt.verify(token as string, 'SECRET') as User;
         const user = await this.usersService.findById(userToken.id)
-        if (!user) {
-          return response.status(400).send({ message: 'Usuário inexistente!' });
-        }
         request.user = user
         return next();
       } catch (error) {
