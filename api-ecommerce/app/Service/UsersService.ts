@@ -15,13 +15,11 @@ export default class UsersService {
   }
 
   public async findById(userId: number) {
-    const user = await this.usersRepository.findById(userId)
-
-    return user
+    return await this.usersRepository.findById(userId)
   }
 
-  public async findByEmail(userId: string) {
-    return await this.usersRepository.findByEmail(userId)
+  public async findByEmail(userEmail: string) {
+    return await this.usersRepository.findByEmail(userEmail)
   }
 
   public async store(payload: User) {
