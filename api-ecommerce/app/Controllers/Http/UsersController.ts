@@ -11,11 +11,12 @@ export default class UsersController {
     this.usersService = new UsersService
   }
 
-  public async index() {
-    return this.usersService.index()
+  public async index({response}: HttpContextContract) {
+    const user = await this.usersService.index()
+    return response.status(200).send(user)
   }
 
-  public async store({ request}: HttpContextContract) {
+  public async store({request}: HttpContextContract) {
     const payload = await request.validate(StoreUserValidator)
     return await this.usersService.store(payload as User)
   }
