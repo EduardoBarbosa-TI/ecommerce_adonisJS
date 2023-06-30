@@ -3,7 +3,9 @@ import User from "App/Models/User";
 export default class UsersRepository {
 
   public async findAll() {
-   return await User.query().select(['id','name','email', 'address', 'admin','createdAt','updatedAt'])
+    const users =  await User.query().select(['id','name','email', 'address', 'admin','createdAt','updatedAt'])
+    if(!users.length) throw new Error('NOT_FOUND')
+    return users
   }
 
   public async findById(userId: number){
@@ -16,9 +18,9 @@ export default class UsersRepository {
     return user
   }
 
-  public async findByEmail(userId: string){
+  public async findByEmail(userEmail: string){
     const user = await User.query()
-      .where('email',userId)
+      .where('email',userEmail)
       .select('*')
       .first()
 
@@ -27,8 +29,13 @@ export default class UsersRepository {
   }
 
   public async store(user: User){
-    await User.create(user)
-    return { message: `Usuário email ${user.email} adicionado com sucesso!`}
+    try {
+      await User.create(user)
+    } catch (error) {
+      throw new Error('CONFLICT')
+    }
+
+    return `Usuário email ${user.email} adicionado com sucesso!`
   }
 
   public async update(userId: number,user: User){
