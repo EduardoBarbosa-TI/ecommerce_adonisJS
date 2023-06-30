@@ -22,23 +22,14 @@ export default class ExceptionHandler extends HttpExceptionHandler {
   }
 
   public async handle(error: any, ctx: HttpContextContract){
-    if (error.message === 'NOT_FOUND') {
-      return ctx.response.status(404).json({
-        message: 'Not Found'
-      })
-    }
+    console.log(error)
+    if (error.message === 'NOT_FOUND') return ctx.response.status(404).json({ message: 'Not Found' })
 
-    if (error.message === 'UNAUTHORIZED') {
-      return ctx.response.status(401).json({
-        message: 'Unauthorized'
-      })
-    }
+    if (error.message === 'UNAUTHORIZED') return ctx.response.status(401).json({ message: 'Unauthorized'})
 
-    if (error.message === 'INTERNAL_SERVER_ERROR') {
-      return ctx.response.status(500).json({
+    if (error.message === 'INTERNAL_SERVER_ERROR') return ctx.response.status(500).json({})
 
-      })
-    }
+    if(error.message === 'CONFLICT') return ctx.response.status(409).json({ message: 'Conflict: email is unique'})
 
     return super.handle(error,ctx)
   }
