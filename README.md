@@ -26,3 +26,5 @@ $ node ace migration:run
 $ npm run dev || node ace serve --watch
 
 # O servidor inciará na port:3333 
+# Acesse o swagger em
+$ http://localhost:3333/docs
