@@ -1,6 +1,6 @@
 export default {
   path: __dirname + "../",
-  title: "Foo",
+  title: "Ecommerce",
   version: "1.0.0",
   tagIndex: 1,
   ignore: ["/swagger", "/docs"],
