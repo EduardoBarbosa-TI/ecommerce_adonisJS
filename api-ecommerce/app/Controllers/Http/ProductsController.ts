@@ -15,9 +15,10 @@ export default class ProductsController {
     return await this.productsService.index(page,limit)
   }
 
-  public async store({ request }: HttpContextContract) {
+  public async store({ request, response }: HttpContextContract) {
     const payload = await request.validate(StoreProductValidator)
-    return await this.productsService.store(payload as Product)
+    const productCreated = await this.productsService.store(payload as Product)
+    return response.status(201).send(productCreated)
   }
 
   public async show({params}: HttpContextContract) {
