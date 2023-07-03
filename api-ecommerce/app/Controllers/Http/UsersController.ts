@@ -16,9 +16,10 @@ export default class UsersController {
     return response.status(200).send(user)
   }
 
-  public async store({request}: HttpContextContract) {
+  public async store({request, response}: HttpContextContract) {
     const payload = await request.validate(StoreUserValidator)
-    return await this.usersService.store(payload as User)
+    const userCreated = await this.usersService.store(payload as User)
+    return response.status(201).send(userCreated)
   }
 
   public async show({ params }: HttpContextContract) {
