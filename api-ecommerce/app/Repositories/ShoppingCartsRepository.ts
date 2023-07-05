@@ -14,7 +14,8 @@ export default class ShoppingCartsRepository {
       .where('shopping_carts.userId', user.id)
       .select('product_shopping_carts.id', 'products.name as name_product', 'products.price', 'products.description', 'product_shopping_carts.unitProducts')
 
-    if(!query) throw new Error('INTERNAL_SERVER_ERROR')
+    if(!query ) throw new Error('INTERNAL_SERVER_ERROR')
+    if(query.length === 0 ) throw new Error('NOT_FOUND')
     return query
   }
 
@@ -80,7 +81,6 @@ export default class ShoppingCartsRepository {
   }
 
   public async deleteByProduct(product: Product, user: User) {
-
     const query = await Database.from("product_shopping_carts")
       .whereIn(
         'id',
