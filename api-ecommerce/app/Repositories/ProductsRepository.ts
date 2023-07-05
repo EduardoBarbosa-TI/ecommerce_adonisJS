@@ -2,9 +2,9 @@ import Product from "App/Models/Product"
 
 export default class ProductsRepository{
   public async findAll(page?: number, limit?: number){
-    const pagination = await Product.query().paginate(page || 1,limit || 5)
-    if(pagination.length === 0) throw new Error('NOT_FOUND')
-    return pagination.toJSON().data
+    const queryPagination = await Product.query().paginate(page || 1,limit || 5)
+    if(queryPagination.length === 0) throw new Error('NOT_FOUND')
+    return queryPagination.toJSON().data
   }
 
   public async findById(productId: number){
@@ -15,7 +15,7 @@ export default class ProductsRepository{
 
   public async store(product: Product){
     await Product.create(product)
-    return {message: `Produto ${product.name} adicionado com sucesso!`}
+    return `Produto ${product.name} adicionado com sucesso!`
   }
 
   public async update(productId : number, product: Product){
